@@ -32,19 +32,24 @@
       margin-bottom: 16px;
       box-shadow: 0 3px 12px #00000010;
     }
-    button, select {
+    input, button, select {
+      width: 100%;
       padding: 12px;
       border: 0;
       border-radius: 9px;
       font-size: 15px;
+      margin: 6px 0;
     }
+    input, select { background: #e8f2eb; }
     button {
       background: #176b45;
       color: white;
       cursor: pointer;
     }
-    select { background: #e8f2eb; }
+    button:disabled { opacity: .6; }
     .tag { color: #b16a24; font-weight: bold; }
+    #message { font-weight: bold; overflow-wrap: anywhere; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -65,28 +70,45 @@
       </select>
     </div>
 
+    <div class="card" id="authCard">
+      <h2>🔐 Register / Login</h2>
+      <input id="fullName" type="text" placeholder="Your name (for registration)">
+      <input id="email" type="email" placeholder="Email address">
+      <input id="password" type="password" placeholder="Password (minimum 6 characters)">
+      <button id="registerBtn" onclick="registerUser()">Create Account</button>
+      <button id="loginBtn" onclick="loginUser()">Login</button>
+      <p id="message"></p>
+    </div>
+
+    <div class="card hidden" id="profileCard">
+      <h2>👤 My Profile</h2>
+      <p id="profileName"></p>
+      <p id="profileEmail"></p>
+      <button onclick="logoutUser()">Logout</button>
+    </div>
+
     <div class="card">
       <h2>🤝 Friends</h2>
       <p>Connect with your community.</p>
-      <button>Find Friends</button>
+      <button onclick="showNotice()">Find Friends</button>
     </div>
 
     <div class="card">
       <h2>🏡 Village Groups</h2>
       <p>Connect with people from your village.</p>
-      <button>Explore Groups</button>
+      <button onclick="showNotice()">Explore Groups</button>
     </div>
 
     <div class="card">
       <h2>🛠️ Development Team</h2>
       <p>Work together and build something great.</p>
-      <button>Open Team</button>
+      <button onclick="showNotice()">Open Team</button>
     </div>
 
     <div class="card">
       <h2>👥 All Members</h2>
       <p>Discover the Adivasi Sathi community.</p>
-      <button>View Members</button>
+      <button onclick="showNotice()">View Members</button>
     </div>
 
     <div class="card">
@@ -95,8 +117,101 @@
     </div>
   </main>
 
-  <script>
-    function changeLanguage() {
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      updateProfile,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD3G13tWsdDzBDJP3XxIp_eRaQIyoreJio",
+      authDomain: "adivasi-sathi.firebaseapp.com",
+      projectId: "adivasi-sathi",
+      storageBucket: "adivasi-sathi.firebasestorage.app",
+      messagingSenderId: "794536278899",
+      appId: "1:794536278899:web:1d330c58f1a65f31eb6306"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const message = document.getElementById("message");
+
+    window.registerUser = async function () {
+      const name = document.getElementById("fullName").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!name || !email || !password) {
+        message.textContent = "Please fill in all three fields.";
+        return;
+      }
+
+      if (password.length < 6) {
+        message.textContent = "Password must be at least 6 characters.";
+        return;
+      }
+
+      try {
+        message.textContent = "Creating your account...";
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(result.user, { displayName: name });
+        message.textContent = "Account created successfully!";
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    };
+
+    window.loginUser = async function () {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        message.textContent = "Enter your email and password.";
+        return;
+      }
+
+      try {
+        message.textContent = "Logging in...";
+        await signInWithEmailAndPassword(auth, email, password);
+        message.textContent = "Login successful!";
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    };
+
+    window.logoutUser = async function () {
+      try {
+        await signOut(auth);
+        message.textContent = "You have logged out.";
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    };
+
+    onAuthStateChanged(auth, user => {
+      const authCard = document.getElementById("authCard");
+      const profileCard = document.getElementById("profileCard");
+
+      if (user) {
+        authCard.classList.add("hidden");
+        profileCard.classList.remove("hidden");
+        document.getElementById("profileName").textContent =
+          "Name: " + (user.displayName || "Member");
+        document.getElementById("profileEmail").textContent =
+          "Email: " + user.email;
+      } else {
+        authCard.classList.remove("hidden");
+        profileCard.classList.add("hidden");
+      }
+    });
+
+    window.changeLanguage = function () {
       const lang = document.getElementById("language").value;
       const welcome = document.getElementById("welcome");
       const description = document.getElementById("description");
@@ -111,7 +226,11 @@
         welcome.textContent = "Welcome to Adivasi Sathi";
         description.textContent = "A community platform for Adivasi people.";
       }
-    }
+    };
+
+    window.showNotice = function () {
+      alert("This feature is coming soon. Please login first.");
+    };
   </script>
 </body>
 </html>
