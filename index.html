@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#176b45">
+  <title>Adivasi Sathi</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7f3;
+      color: #183c2b;
+    }
+    header {
+      background: #176b45;
+      color: white;
+      padding: 24px 16px;
+      text-align: center;
+    }
+    header h1 { margin: 0 0 8px; }
+    main {
+      max-width: 650px;
+      margin: 25px auto;
+      padding: 16px;
+    }
+    .card {
+      background: white;
+      padding: 22px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 3px 12px #00000010;
+    }
+    button, select {
+      padding: 12px;
+      border: 0;
+      border-radius: 9px;
+      font-size: 15px;
+    }
+    button {
+      background: #176b45;
+      color: white;
+      cursor: pointer;
+    }
+    select { background: #e8f2eb; }
+    .tag { color: #b16a24; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="font-size:38px">🌳</div>
+    <h1>Adivasi Sathi</h1>
+    <p>Together We Connect, Together We Grow.</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2 id="welcome">Welcome to Adivasi Sathi</h2>
+      <p id="description">A community platform for Adivasi people.</p>
+      <select id="language" onchange="changeLanguage()">
+        <option value="en">English</option>
+        <option value="bn">বাংলা</option>
+        <option value="sat">Santali</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <h2>🤝 Friends</h2>
+      <p>Connect with your community.</p>
+      <button>Find Friends</button>
+    </div>
+
+    <div class="card">
+      <h2>🏡 Village Groups</h2>
+      <p>Connect with people from your village.</p>
+      <button>Explore Groups</button>
+    </div>
+
+    <div class="card">
+      <h2>🛠️ Development Team</h2>
+      <p>Work together and build something great.</p>
+      <button>Open Team</button>
+    </div>
+
+    <div class="card">
+      <h2>👥 All Members</h2>
+      <p>Discover the Adivasi Sathi community.</p>
+      <button>View Members</button>
+    </div>
+
+    <div class="card">
+      <p class="tag">Adivasi Sathi ❤️</p>
+      <p>Community • Unity • Friendship</p>
+    </div>
+  </main>
+
+  <script>
+    function changeLanguage() {
+      const lang = document.getElementById("language").value;
+      const welcome = document.getElementById("welcome");
+      const description = document.getElementById("description");
+
+      if (lang === "bn") {
+        welcome.textContent = "আদিবাসী সাথীতে স্বাগতম";
+        description.textContent = "আদিবাসী মানুষের জন্য একটি কমিউনিটি প্ল্যাটফর্ম।";
+      } else if (lang === "sat") {
+        welcome.textContent = "Johar! Adivasi Sathi";
+        description.textContent = "Adivasi community platform.";
+      } else {
+        welcome.textContent = "Welcome to Adivasi Sathi";
+        description.textContent = "A community platform for Adivasi people.";
+      }
+    }
+  </script>
+</body>
+</html>
