@@ -5,26 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#176b45">
   <title>Adivasi Sathi</title>
+
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #f4f7f3;
       color: #183c2b;
     }
+
     header {
       background: #176b45;
       color: white;
       padding: 24px 16px;
       text-align: center;
     }
+
     header h1 { margin: 0 0 8px; }
+
     main {
       max-width: 650px;
       margin: 25px auto;
       padding: 16px;
     }
+
     .card {
       background: white;
       padding: 22px;
@@ -32,6 +38,7 @@
       margin-bottom: 16px;
       box-shadow: 0 3px 12px #00000010;
     }
+
     input, button, select {
       width: 100%;
       padding: 12px;
@@ -40,197 +47,500 @@
       font-size: 15px;
       margin: 6px 0;
     }
+
     input, select { background: #e8f2eb; }
+
     button {
       background: #176b45;
       color: white;
       cursor: pointer;
     }
+
     button:disabled { opacity: .6; }
-    .tag { color: #b16a24; font-weight: bold; }
-    #message { font-weight: bold; overflow-wrap: anywhere; }
+
+    .tag {
+      color: #b16a24;
+      font-weight: bold;
+    }
+
+    #message, #memberStatus {
+      font-weight: bold;
+      overflow-wrap: anywhere;
+    }
+
     .hidden { display: none; }
+
+    .member {
+      background: #f0f6f1;
+      padding: 13px;
+      margin: 9px 0;
+      border-radius: 10px;
+      border-left: 4px solid #176b45;
+    }
+
+    .member strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .member small {
+      color: #52705e;
+      overflow-wrap: anywhere;
+    }
   </style>
 </head>
+
 <body>
-  <header>
-    <div style="font-size:38px">🌳</div>
-    <h1>Adivasi Sathi</h1>
-    <p>Together We Connect, Together We Grow.</p>
-  </header>
 
-  <main>
-    <div class="card">
-      <h2 id="welcome">Welcome to Adivasi Sathi</h2>
-      <p id="description">A community platform for Adivasi people.</p>
-      <select id="language" onchange="changeLanguage()">
-        <option value="en">English</option>
-        <option value="bn">বাংলা</option>
-        <option value="sat">Santali</option>
-      </select>
-    </div>
+<header>
+  <div style="font-size:38px">🌳</div>
+  <h1>Adivasi Sathi</h1>
+  <p>Together We Connect, Together We Grow.</p>
+</header>
 
-    <div class="card" id="authCard">
-      <h2>🔐 Register / Login</h2>
-      <input id="fullName" type="text" placeholder="Your name (for registration)">
-      <input id="email" type="email" placeholder="Email address">
-      <input id="password" type="password" placeholder="Password (minimum 6 characters)">
-      <button id="registerBtn" onclick="registerUser()">Create Account</button>
-      <button id="loginBtn" onclick="loginUser()">Login</button>
-      <p id="message"></p>
-    </div>
+<main>
 
-    <div class="card hidden" id="profileCard">
-      <h2>👤 My Profile</h2>
-      <p id="profileName"></p>
-      <p id="profileEmail"></p>
-      <button onclick="logoutUser()">Logout</button>
-    </div>
+  <div class="card">
+    <h2 id="welcome">Welcome to Adivasi Sathi</h2>
+    <p id="description">
+      A community platform for Adivasi people.
+    </p>
 
-    <div class="card">
-      <h2>🤝 Friends</h2>
-      <p>Connect with your community.</p>
-      <button onclick="showNotice()">Find Friends</button>
-    </div>
+    <select id="language" onchange="changeLanguage()">
+      <option value="en">English</option>
+      <option value="bn">বাংলা</option>
+      <option value="sat">Santali</option>
+    </select>
+  </div>
 
-    <div class="card">
-      <h2>🏡 Village Groups</h2>
-      <p>Connect with people from your village.</p>
-      <button onclick="showNotice()">Explore Groups</button>
-    </div>
+  <!-- REGISTER AND LOGIN -->
 
-    <div class="card">
-      <h2>🛠️ Development Team</h2>
-      <p>Work together and build something great.</p>
-      <button onclick="showNotice()">Open Team</button>
-    </div>
+  <div class="card" id="authCard">
+    <h2>🔐 Register / Login</h2>
 
-    <div class="card">
-      <h2>👥 All Members</h2>
-      <p>Discover the Adivasi Sathi community.</p>
-      <button onclick="showNotice()">View Members</button>
-    </div>
+    <input
+      id="fullName"
+      type="text"
+      placeholder="Your name (for registration)"
+    >
 
-    <div class="card">
-      <p class="tag">Adivasi Sathi ❤️</p>
-      <p>Community • Unity • Friendship</p>
-    </div>
-  </main>
+    <input
+      id="email"
+      type="email"
+      placeholder="Email address"
+    >
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import {
-      getAuth,
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      updateProfile,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    <input
+      id="password"
+      type="password"
+      placeholder="Password (minimum 6 characters)"
+    >
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyD3G13tWsdDzBDJP3XxIp_eRaQIyoreJio",
-      authDomain: "adivasi-sathi.firebaseapp.com",
-      projectId: "adivasi-sathi",
-      storageBucket: "adivasi-sathi.firebasestorage.app",
-      messagingSenderId: "794536278899",
-      appId: "1:794536278899:web:1d330c58f1a65f31eb6306"
-    };
+    <button id="registerBtn" onclick="registerUser()">
+      Create Account
+    </button>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    <button id="loginBtn" onclick="loginUser()">
+      Login
+    </button>
 
-    const message = document.getElementById("message");
+    <p id="message"></p>
+  </div>
 
-    window.registerUser = async function () {
-      const name = document.getElementById("fullName").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+  <!-- MY PROFILE -->
 
-      if (!name || !email || !password) {
-        message.textContent = "Please fill in all three fields.";
-        return;
+  <div class="card hidden" id="profileCard">
+    <h2>👤 My Profile</h2>
+    <p id="profileName"></p>
+    <p id="profileEmail"></p>
+    <p id="profileId"></p>
+
+    <button onclick="logoutUser()">Logout</button>
+  </div>
+
+  <!-- FRIENDS -->
+
+  <div class="card">
+    <h2>🤝 Friends</h2>
+    <p>Connect with your community.</p>
+    <button onclick="showNotice()">
+      Find Friends
+    </button>
+  </div>
+
+  <!-- VILLAGE GROUPS -->
+
+  <div class="card">
+    <h2>🏡 Village Groups</h2>
+    <p>Connect with people from your village.</p>
+    <button onclick="showNotice()">
+      Explore Groups
+    </button>
+  </div>
+
+  <!-- DEVELOPMENT TEAM -->
+
+  <div class="card">
+    <h2>🛠️ Development Team</h2>
+    <p>Work together and build something great.</p>
+    <button onclick="showNotice()">
+      Open Team
+    </button>
+  </div>
+
+  <!-- ALL MEMBERS -->
+
+  <div class="card">
+    <h2>👥 All Members</h2>
+
+    <p>
+      Discover the Adivasi Sathi community.
+    </p>
+
+    <p id="memberStatus">
+      Please login to view members.
+    </p>
+
+    <div id="membersList"></div>
+  </div>
+
+  <div class="card">
+    <p class="tag">Adivasi Sathi ❤️</p>
+    <p>Community • Unity • Friendship</p>
+  </div>
+
+</main>
+
+<script type="module">
+
+  import {
+    initializeApp
+  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+
+  import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    updateProfile,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    collection,
+    onSnapshot,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+
+  // FIREBASE CONFIGURATION
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD3G13tWsdDzBDJP3XxIp_eRaQIyoreJio",
+    authDomain: "adivasi-sathi.firebaseapp.com",
+    projectId: "adivasi-sathi",
+    storageBucket: "adivasi-sathi.firebasestorage.app",
+    messagingSenderId: "794536278899",
+    appId: "1:794536278899:web:1d330c58f1a65f31eb6306"
+  };
+
+
+  // INITIALIZE FIREBASE
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const message = document.getElementById("message");
+  const memberStatus = document.getElementById("memberStatus");
+  const membersList = document.getElementById("membersList");
+
+  let unsubscribeMembers = null;
+
+
+  // SAVE USER PROFILE TO FIRESTORE
+
+  async function saveUserProfile(user) {
+
+    const userRef = doc(db, "users", user.uid);
+
+    await setDoc(userRef, {
+      uid: user.uid,
+      name: user.displayName || "Member",
+      email: user.email || "",
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+  }
+
+
+  // REGISTER USER
+
+  window.registerUser = async function () {
+
+    const name = document.getElementById("fullName").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!name || !email || !password) {
+      message.textContent = "Please fill in all three fields.";
+      return;
+    }
+
+    if (password.length < 6) {
+      message.textContent = "Password must be at least 6 characters.";
+      return;
+    }
+
+    try {
+
+      message.textContent = "Creating your account...";
+
+      const result = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      await updateProfile(result.user, {
+        displayName: name
+      });
+
+      await saveUserProfile(result.user);
+
+      message.textContent =
+        "Account created and profile saved successfully!";
+
+    } catch (error) {
+
+      message.textContent = error.message;
+
+    }
+
+  };
+
+
+  // LOGIN USER
+
+  window.loginUser = async function () {
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+      message.textContent = "Enter your email and password.";
+      return;
+    }
+
+    try {
+
+      message.textContent = "Logging in...";
+
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      message.textContent = "Login successful!";
+
+    } catch (error) {
+
+      message.textContent = error.message;
+
+    }
+
+  };
+
+
+  // LOGOUT USER
+
+  window.logoutUser = async function () {
+
+    try {
+
+      await signOut(auth);
+      message.textContent = "You have logged out.";
+
+    } catch (error) {
+
+      message.textContent = error.message;
+
+    }
+
+  };
+
+
+  // LOAD ALL MEMBERS IN REAL TIME
+
+  function loadAllMembers() {
+
+    if (unsubscribeMembers) {
+      unsubscribeMembers();
+      unsubscribeMembers = null;
+    }
+
+    membersList.replaceChildren();
+
+    memberStatus.textContent = "Loading members...";
+
+    const usersRef = collection(db, "users");
+
+    unsubscribeMembers = onSnapshot(
+      usersRef,
+
+      snapshot => {
+
+        membersList.replaceChildren();
+
+        if (snapshot.empty) {
+          memberStatus.textContent = "No members found yet.";
+          return;
+        }
+
+        memberStatus.textContent =
+          "Total Members: " + snapshot.size;
+
+        snapshot.forEach(documentSnapshot => {
+
+          const memberData = documentSnapshot.data();
+
+          const memberBox = document.createElement("div");
+          memberBox.className = "member";
+
+          const memberName = document.createElement("strong");
+          memberName.textContent =
+            "👤 " + (memberData.name || "Member");
+
+          const memberEmail = document.createElement("small");
+          memberEmail.textContent =
+            memberData.email || "Email not available";
+
+          memberBox.appendChild(memberName);
+          memberBox.appendChild(memberEmail);
+
+          membersList.appendChild(memberBox);
+
+        });
+
+      },
+
+      error => {
+
+        memberStatus.textContent =
+          "Database error: " + error.message;
+
       }
+    );
 
-      if (password.length < 6) {
-        message.textContent = "Password must be at least 6 characters.";
-        return;
-      }
+  }
+
+
+  // AUTHENTICATION STATE
+
+  onAuthStateChanged(auth, async user => {
+
+    const authCard = document.getElementById("authCard");
+    const profileCard = document.getElementById("profileCard");
+
+    if (user) {
+
+      authCard.classList.add("hidden");
+      profileCard.classList.remove("hidden");
+
+      document.getElementById("profileName").textContent =
+        "Name: " + (user.displayName || "Member");
+
+      document.getElementById("profileEmail").textContent =
+        "Email: " + (user.email || "");
+
+      document.getElementById("profileId").textContent =
+        "User ID: " + user.uid;
 
       try {
-        message.textContent = "Creating your account...";
-        const result = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(result.user, { displayName: name });
-        message.textContent = "Account created successfully!";
+
+        await saveUserProfile(user);
+        loadAllMembers();
+
       } catch (error) {
-        message.textContent = error.message;
-      }
-    };
 
-    window.loginUser = async function () {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+        memberStatus.textContent =
+          "Could not save profile: " + error.message;
 
-      if (!email || !password) {
-        message.textContent = "Enter your email and password.";
-        return;
       }
 
-      try {
-        message.textContent = "Logging in...";
-        await signInWithEmailAndPassword(auth, email, password);
-        message.textContent = "Login successful!";
-      } catch (error) {
-        message.textContent = error.message;
+    } else {
+
+      authCard.classList.remove("hidden");
+      profileCard.classList.add("hidden");
+
+      if (unsubscribeMembers) {
+        unsubscribeMembers();
+        unsubscribeMembers = null;
       }
-    };
 
-    window.logoutUser = async function () {
-      try {
-        await signOut(auth);
-        message.textContent = "You have logged out.";
-      } catch (error) {
-        message.textContent = error.message;
-      }
-    };
+      membersList.replaceChildren();
 
-    onAuthStateChanged(auth, user => {
-      const authCard = document.getElementById("authCard");
-      const profileCard = document.getElementById("profileCard");
+      memberStatus.textContent =
+        "Please login to view members.";
 
-      if (user) {
-        authCard.classList.add("hidden");
-        profileCard.classList.remove("hidden");
-        document.getElementById("profileName").textContent =
-          "Name: " + (user.displayName || "Member");
-        document.getElementById("profileEmail").textContent =
-          "Email: " + user.email;
-      } else {
-        authCard.classList.remove("hidden");
-        profileCard.classList.add("hidden");
-      }
-    });
+    }
 
-    window.changeLanguage = function () {
-      const lang = document.getElementById("language").value;
-      const welcome = document.getElementById("welcome");
-      const description = document.getElementById("description");
+  });
 
-      if (lang === "bn") {
-        welcome.textContent = "আদিবাসী সাথীতে স্বাগতম";
-        description.textContent = "আদিবাসী মানুষের জন্য একটি কমিউনিটি প্ল্যাটফর্ম।";
-      } else if (lang === "sat") {
-        welcome.textContent = "Johar! Adivasi Sathi";
-        description.textContent = "Adivasi community platform.";
-      } else {
-        welcome.textContent = "Welcome to Adivasi Sathi";
-        description.textContent = "A community platform for Adivasi people.";
-      }
-    };
 
-    window.showNotice = function () {
-      alert("This feature is coming soon. Please login first.");
-    };
-  </script>
+  // LANGUAGE SWITCHING
+
+  window.changeLanguage = function () {
+
+    const lang = document.getElementById("language").value;
+
+    const welcome = document.getElementById("welcome");
+    const description = document.getElementById("description");
+
+    if (lang === "bn") {
+
+      welcome.textContent = "আদিবাসী সাথীতে স্বাগতম";
+
+      description.textContent =
+        "আদিবাসী মানুষের জন্য একটি কমিউনিটি প্ল্যাটফর্ম।";
+
+    } else if (lang === "sat") {
+
+      welcome.textContent = "Johar! Adivasi Sathi";
+
+      description.textContent =
+        "Adivasi community platform.";
+
+    } else {
+
+      welcome.textContent = "Welcome to Adivasi Sathi";
+
+      description.textContent =
+        "A community platform for Adivasi people.";
+
+    }
+
+  };
+
+
+  // FUTURE FEATURES
+
+  window.showNotice = function () {
+
+    if (!auth.currentUser) {
+      alert("Please login first.");
+      return;
+    }
+
+    alert("This feature is coming soon!");
+
+  };
+
+</script>
+
 </body>
 </html>
