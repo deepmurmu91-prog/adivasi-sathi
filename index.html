@@ -18,11 +18,11 @@ input,select{background:#e8f2eb}
 button{background:#176b45;color:white;cursor:pointer}
 button:disabled{opacity:.6}
 .hidden{display:none}
-.tag{color:#b16a24;font-weight:bold}
 .member{background:#f0f6f1;padding:13px;margin:9px 0;border-radius:10px;border-left:4px solid #176b45}
 .member strong{display:block;margin-bottom:5px}
 .member small{color:#52705e;overflow-wrap:anywhere}
 #message,#memberStatus{font-weight:bold;overflow-wrap:anywhere}
+.secondary{background:#52705e}
 </style>
 </head>
 
@@ -57,28 +57,35 @@ button:disabled{opacity:.6}
 
 <div class="card hidden" id="profileCard">
 <h2>👤 My Profile</h2>
-<p id="profileName"></p>
 <p id="profileEmail"></p>
 <p id="profileId"></p>
-<button onclick="logoutUser()">Logout</button>
+<label for="newProfileName">Your display name</label>
+<input id="newProfileName" type="text" placeholder="Enter your real name">
+<button onclick="saveMyName()">Save My Name</button>
+<button class="secondary" onclick="logoutUser()">Logout</button>
 </div>
 
 <div class="card">
 <h2>🤝 Friends</h2>
 <p>Connect with your community.</p>
-<button onclick="showNotice()">Find Friends</button>
+<button onclick="showNotice('Friends')">Find Friends</button>
 </div>
 
 <div class="card">
 <h2>🏡 Village Groups</h2>
 <p>Connect with people from your village.</p>
-<button onclick="showNotice()">Explore Groups</button>
+<button onclick="showNotice('Village Groups')">Explore Groups</button>
 </div>
 
 <div class="card">
-<h2>🛠️ Development Team</h2>
+<h2>🛠️ App Development Team</h2>
 <p>Work together and build something great.</p>
-<button onclick="showNotice()">Open Team</button>
+<button onclick="openTeam()">Open Team</button>
+<div id="teamList" class="hidden">
+<div class="member"><strong>👤 Joydeb</strong><small>App Development Team</small></div>
+<div class="member"><strong>👤 Sarbendu</strong><small>App Development Team</small></div>
+<div class="member"><strong>👤 Ravi</strong><small>App Development Team</small></div>
+</div>
 </div>
 
 <div class="card">
@@ -89,7 +96,7 @@ button:disabled{opacity:.6}
 </div>
 
 <div class="card">
-<p class="tag">Adivasi Sathi ❤️</p>
+<p style="color:#b16a24;font-weight:bold">Adivasi Sathi ❤️</p>
 <p>Community • Unity • Friendship</p>
 </div>
 
@@ -112,12 +119,12 @@ signOut
 import {
 getFirestore,
 doc,
+getDoc,
 setDoc,
 collection,
 onSnapshot,
 serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-
 
 const firebaseConfig = {
 apiKey: "AIzaSyD3G13tWsdDzBDJP3XxIp_eRaQIyoreJio",
@@ -138,278 +145,295 @@ const membersList = document.getElementById("membersList");
 
 let unsubscribeMembers = null;
 
+function showMessage(text){
+  message.textContent = text;
+}
 
-// SAVE PRIVATE AND PUBLIC PROFILES
+// Save private and public profiles
+async function saveUserProfile(user, name){
 
-async function saveUserProfile(user) {
+  const cleanName = (name || "").trim();
 
-const name = user.displayName || "Member";
+  if(!cleanName){
+    throw new Error("Please enter your name in My Profile.");
+  }
 
-// Private information: only the owner can read it
-await setDoc(doc(db,"users",user.uid),{
-uid:user.uid,
-name:name,
-email:user.email || "",
-updatedAt:serverTimestamp()
-},{merge:true});
+  await setDoc(doc(db,"users",user.uid),{
+    uid:user.uid,
+    name:cleanName,
+    email:user.email || "",
+    updatedAt:serverTimestamp()
+  },{merge:true});
 
-// Public information: visible to logged-in members
-await setDoc(doc(db,"publicProfiles",user.uid),{
-uid:user.uid,
-name:name,
-updatedAt:serverTimestamp()
-},{merge:true});
-
+  await setDoc(doc(db,"publicProfiles",user.uid),{
+    uid:user.uid,
+    name:cleanName,
+    updatedAt:serverTimestamp()
+  },{merge:true});
 }
 
 
-// REGISTER
-
+// Registration
 window.registerUser = async function(){
 
-const name=document.getElementById("fullName").value.trim();
-const email=document.getElementById("email").value.trim();
-const password=document.getElementById("password").value;
+  const name=document.getElementById("fullName").value.trim();
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value;
+  const button=document.getElementById("registerBtn");
 
-if(!name || !email || !password){
-message.textContent="Please fill in all three fields.";
-return;
-}
+  if(!name || !email || !password){
+    showMessage("Please fill in all three fields.");
+    return;
+  }
 
-if(password.length<6){
-message.textContent="Password must be at least 6 characters.";
-return;
-}
+  if(password.length<6){
+    showMessage("Password must be at least 6 characters.");
+    return;
+  }
 
-const button=document.getElementById("registerBtn");
-button.disabled=true;
+  button.disabled=true;
 
-try{
+  try{
+    showMessage("Creating your account...");
 
-message.textContent="Creating your account...";
+    const result=await createUserWithEmailAndPassword(auth,email,password);
 
-const result=await createUserWithEmailAndPassword(auth,email,password);
+    await updateProfile(result.user,{displayName:name});
+    await saveUserProfile(result.user,name);
 
-await updateProfile(result.user,{displayName:name});
+    showMessage("Account created successfully!");
 
-await saveUserProfile(result.user);
-
-message.textContent="Account created successfully!";
-
-}catch(error){
-
-message.textContent=error.message;
-
-}finally{
-
-button.disabled=false;
-
-}
-
+  }catch(error){
+    showMessage("Registration error: "+error.message);
+  }finally{
+    button.disabled=false;
+  }
 };
 
 
-// LOGIN
-
+// Login
 window.loginUser = async function(){
 
-const email=document.getElementById("email").value.trim();
-const password=document.getElementById("password").value;
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value;
+  const button=document.getElementById("loginBtn");
 
-if(!email || !password){
-message.textContent="Enter your email and password.";
-return;
-}
+  if(!email || !password){
+    showMessage("Enter your email and password.");
+    return;
+  }
 
-const button=document.getElementById("loginBtn");
-button.disabled=true;
+  button.disabled=true;
 
-try{
-
-message.textContent="Logging in...";
-
-await signInWithEmailAndPassword(auth,email,password);
-
-message.textContent="Login successful!";
-
-}catch(error){
-
-message.textContent=error.message;
-
-}finally{
-
-button.disabled=false;
-
-}
-
+  try{
+    showMessage("Logging in...");
+    await signInWithEmailAndPassword(auth,email,password);
+    showMessage("Login successful!");
+  }catch(error){
+    showMessage("Login error: "+error.message);
+  }finally{
+    button.disabled=false;
+  }
 };
 
 
-// LOGOUT
+// Save or change profile name
+window.saveMyName = async function(){
 
+  const user=auth.currentUser;
+  const name=document.getElementById("newProfileName").value.trim();
+
+  if(!user){
+    alert("Please login first.");
+    return;
+  }
+
+  if(!name){
+    alert("Please enter your name.");
+    return;
+  }
+
+  try{
+    await updateProfile(user,{displayName:name});
+    await saveUserProfile(user,name);
+
+    document.getElementById("newProfileName").value=name;
+    showMessage("Your profile name has been saved.");
+    alert("Your name has been saved successfully!");
+
+  }catch(error){
+    alert("Profile save error: "+error.message);
+  }
+};
+
+
+// Logout
 window.logoutUser = async function(){
-
-try{
-
-await signOut(auth);
-message.textContent="You have logged out.";
-
-}catch(error){
-
-message.textContent=error.message;
-
-}
-
+  try{
+    await signOut(auth);
+    showMessage("You have logged out.");
+  }catch(error){
+    showMessage(error.message);
+  }
 };
 
 
-// ALL MEMBERS REAL-TIME
-
+// Load all members
 function loadAllMembers(){
 
-if(unsubscribeMembers){
-unsubscribeMembers();
-unsubscribeMembers=null;
-}
+  if(unsubscribeMembers){
+    unsubscribeMembers();
+    unsubscribeMembers=null;
+  }
 
-membersList.replaceChildren();
-memberStatus.textContent="Loading members...";
+  membersList.replaceChildren();
+  memberStatus.textContent="Loading members...";
 
-unsubscribeMembers=onSnapshot(
-collection(db,"publicProfiles"),
+  unsubscribeMembers=onSnapshot(
+    collection(db,"publicProfiles"),
 
-snapshot=>{
+    snapshot=>{
 
-membersList.replaceChildren();
+      membersList.replaceChildren();
 
-if(snapshot.empty){
-memberStatus.textContent="No members found yet.";
-return;
-}
+      if(snapshot.empty){
+        memberStatus.textContent="No members found yet.";
+        return;
+      }
 
-memberStatus.textContent="Total Members: "+snapshot.size;
+      memberStatus.textContent="Total Members: "+snapshot.size;
 
-snapshot.forEach(memberDoc=>{
+      snapshot.forEach(memberDoc=>{
 
-const data=memberDoc.data();
+        const data=memberDoc.data();
 
-const box=document.createElement("div");
-box.className="member";
+        const box=document.createElement("div");
+        box.className="member";
 
-const name=document.createElement("strong");
-name.textContent="👤 "+(data.name || "Member");
+        const name=document.createElement("strong");
+        name.textContent="👤 "+(data.name || "Member");
 
-const uid=document.createElement("small");
-uid.textContent="Member ID: "+data.uid;
+        const uid=document.createElement("small");
+        uid.textContent="Member ID: "+(data.uid || memberDoc.id);
 
-box.appendChild(name);
-box.appendChild(uid);
-membersList.appendChild(box);
+        box.appendChild(name);
+        box.appendChild(uid);
+        membersList.appendChild(box);
 
-});
+      });
 
-},
+    },
 
-error=>{
-
-memberStatus.textContent="Database error: "+error.message;
-
-}
-);
-
+    error=>{
+      memberStatus.textContent="Database error: "+error.message;
+    }
+  );
 }
 
 
-// LOGIN STATE
-
+// Login state
 onAuthStateChanged(auth,async user=>{
 
-const authCard=document.getElementById("authCard");
-const profileCard=document.getElementById("profileCard");
+  const authCard=document.getElementById("authCard");
+  const profileCard=document.getElementById("profileCard");
 
-if(user){
+  if(user){
 
-authCard.classList.add("hidden");
-profileCard.classList.remove("hidden");
+    authCard.classList.add("hidden");
+    profileCard.classList.remove("hidden");
 
-document.getElementById("profileName").textContent=
-"Name: "+(user.displayName || "Member");
+    document.getElementById("profileEmail").textContent=
+      "Email: "+(user.email || "");
 
-document.getElementById("profileEmail").textContent=
-"Email: "+(user.email || "");
+    document.getElementById("profileId").textContent=
+      "User ID: "+user.uid;
 
-document.getElementById("profileId").textContent=
-"User ID: "+user.uid;
+    try{
 
-try{
+      const userRef=doc(db,"users",user.uid);
+      const userSnapshot=await getDoc(userRef);
 
-await saveUserProfile(user);
-loadAllMembers();
+      const savedName=userSnapshot.exists()
+        ? userSnapshot.data().name
+        : "";
 
-}catch(error){
+      const displayName=user.displayName || savedName || "";
 
-memberStatus.textContent="Profile save error: "+error.message;
+      document.getElementById("newProfileName").value=
+        displayName==="Member" ? "" : displayName;
 
-}
+      if(displayName && displayName!=="Member"){
+        await saveUserProfile(user,displayName);
+      }
 
-}else{
+      loadAllMembers();
 
-authCard.classList.remove("hidden");
-profileCard.classList.add("hidden");
+      if(!displayName || displayName==="Member"){
+        memberStatus.textContent=
+          "Please enter your real name in My Profile and press Save My Name.";
+      }
 
-if(unsubscribeMembers){
-unsubscribeMembers();
-unsubscribeMembers=null;
-}
+    }catch(error){
+      memberStatus.textContent="Profile/Database error: "+error.message;
+    }
 
-membersList.replaceChildren();
-memberStatus.textContent="Please login to view members.";
+  }else{
 
-}
+    authCard.classList.remove("hidden");
+    profileCard.classList.add("hidden");
+
+    if(unsubscribeMembers){
+      unsubscribeMembers();
+      unsubscribeMembers=null;
+    }
+
+    membersList.replaceChildren();
+    memberStatus.textContent="Please login to view members.";
+  }
 
 });
 
 
-// LANGUAGE SWITCHING
+// Team section
+window.openTeam=function(){
+  if(!auth.currentUser){
+    alert("Please login first.");
+    return;
+  }
 
-window.changeLanguage=function(){
-
-const lang=document.getElementById("language").value;
-
-const welcome=document.getElementById("welcome");
-const description=document.getElementById("description");
-
-if(lang==="bn"){
-
-welcome.textContent="আদিবাসী সাথীতে স্বাগতম";
-description.textContent="আদিবাসী মানুষের জন্য একটি কমিউনিটি প্ল্যাটফর্ম।";
-
-}else if(lang==="sat"){
-
-welcome.textContent="Johar! Adivasi Sathi";
-description.textContent="Adivasi community platform.";
-
-}else{
-
-welcome.textContent="Welcome to Adivasi Sathi";
-description.textContent="A community platform for Adivasi people.";
-
-}
-
+  document.getElementById("teamList").classList.toggle("hidden");
 };
 
 
-// FUTURE FEATURES
+// Language switching
+window.changeLanguage=function(){
 
-window.showNotice=function(){
+  const lang=document.getElementById("language").value;
+  const welcome=document.getElementById("welcome");
+  const description=document.getElementById("description");
 
-if(!auth.currentUser){
-alert("Please login first.");
-return;
-}
+  if(lang==="bn"){
+    welcome.textContent="আদিবাসী সাথীতে স্বাগতম";
+    description.textContent="আদিবাসী মানুষের জন্য একটি কমিউনিটি প্ল্যাটফর্ম।";
+  }else if(lang==="sat"){
+    welcome.textContent="Johar! Adivasi Sathi";
+    description.textContent="Adivasi community platform.";
+  }else{
+    welcome.textContent="Welcome to Adivasi Sathi";
+    description.textContent="A community platform for Adivasi people.";
+  }
+};
 
-alert("This feature is coming soon!");
 
+// Future features
+window.showNotice=function(feature){
+
+  if(!auth.currentUser){
+    alert("Please login first.");
+    return;
+  }
+
+  alert(feature+" feature is coming soon!");
 };
 
 </script>
